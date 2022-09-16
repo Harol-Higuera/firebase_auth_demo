@@ -1,6 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -13,104 +19,233 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
+  String? _emailAddress;
+  String _entryEmailAddress = '';
+  bool _isUserLoggedIn = false;
+  var dynamicLinks = FirebaseDynamicLinks.instance;
+  var auth = FirebaseAuth.instance;
+  final myController = TextEditingController();
 
-  int _counter = 0;
+  final ButtonStyle raisedButtonStyle = ElevatedButton.styleFrom(
+    onPrimary: Colors.black87,
+    primary: Colors.grey[300],
+    minimumSize: Size(88, 36),
+    padding: EdgeInsets.symmetric(horizontal: 16),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(2)),
+    ),
+  );
 
-  void _incrementCounter() {
+  /// 1::::::: SEND EMAIL TO AUTHENTICATE
+  ///
+  ///
+  var acs = ActionCodeSettings(
+      url: 'https://harol.page.link',
+      handleCodeInApp: true,
+      iOSBundleId: 'com.harol.fir.auth.demo',
+      androidPackageName: 'com.harol.fir.auth.demo',
+      androidInstallApp: true,
+      androidMinimumVersion: '12');
+
+  void sendEmailToAuthenticate() {
+    auth
+        .sendSignInLinkToEmail(
+          email: _entryEmailAddress,
+          actionCodeSettings: acs,
+        )
+        .catchError(
+            (onError) => print('Error sending email verification $onError'))
+        .then(
+      (value) async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('email_address', _entryEmailAddress);
+        setState(() {
+          _emailAddress = _entryEmailAddress;
+          _entryEmailAddress = '';
+        });
+        myController.clear();
+      },
+    );
+  }
+
+  /// 2::::::: RECEIVE LINK TO AUTHENTICATE
+  ///
+  ///
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print('Harol.....didChangeAppLifecycleState... ${state.toString()}');
+    if (state == AppLifecycleState.resumed) {
+      print('Harol.....resumed');
+      checkIfPendingLinks();
+
+    }
+  }
+
+  void checkIfPendingLinks() async {
+    final PendingDynamicLinkData? data =
+        await FirebaseDynamicLinks.instance.getInitialLink();
+    final link = data?.link;
+    if (link != null) {
+      handleLink(link);
+    }
+  }
+
+  void handleLink(Uri link) async {
+    if (auth.isSignInWithEmailLink(link.toString())) {
+      final prefs = await SharedPreferences.getInstance();
+      final emailAddress = prefs.getString('email_address');
+      if (emailAddress != null) {
+        print('Harol...LINK EXISTS!!');
+        auth
+            .signInWithEmailLink(
+                email: emailAddress, emailLink: link.toString())
+            .then((_) {})
+            .catchError((onError) {
+          print('Harol..Error signing in with email link $onError');
+        });
+      } else {
+        print('Harol...LINK DOES NOT EXISTS!!');
+      }
+    }
+  }
+
+  void _readPendingEmailAddress() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _emailAddress = prefs.getString('email_address');
+    });
+  }
+
+  void _subscribeForAuthState() {
+    auth.authStateChanges().listen((User? user) async {
+      final email = user?.email;
+      if (user == null && email != null) {
+        setState(() {
+          _isUserLoggedIn = true;
+          _emailAddress = email;
+        });
+        final prefs = await SharedPreferences.getInstance();
+        prefs.remove('email_address');
+      } else {
+        if (_isUserLoggedIn) {
+          setState(() {
+            _isUserLoggedIn = false;
+            _emailAddress = '';
+          });
+        }
+      }
+    });
+  }
+
+  void _subscribeToDynamicLinks(){
+    dynamicLinks.onLink.listen((dynamicLinkData) {
+      final Uri deepLink = dynamicLinkData.link;
+      handleLink(deepLink);
+    }).onError((error) {
+      print('Harol... onLink error... ${error.message}');
     });
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _readPendingEmailAddress();
+    _subscribeForAuthState();
+    _subscribeToDynamicLinks();
+  }
+
+  @override
+  void dispose() {
+    myController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    var text = '';
+    if (_emailAddress == null) {
+      text = 'No User logged in';
+    } else {
+      if (!_isUserLoggedIn) {
+        text = 'Waiting for link for email: $_emailAddress';
+      } else {
+        text = 'User logged in with email: $_emailAddress';
+      }
+    }
+
+    var buttonText = _isUserLoggedIn ? 'Logout' : 'Send Email to Login';
+
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Firebase Auth Demo'),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+              text,
+            ),
+            const SizedBox(height: 20),
+            if (!_isUserLoggedIn)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                child: TextField(
+                  onChanged: (_text) {
+                    setState(() {
+                      _entryEmailAddress = _text;
+                    });
+                  },
+                  controller: myController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Enter an email',
+                  ),
+                ),
+              ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: raisedButtonStyle,
+              onPressed: () {
+                if (!_isUserLoggedIn) {
+                  if (_entryEmailAddress.isValidEmail()) {
+                    sendEmailToAuthenticate();
+                  }
+                } else {
+                  FirebaseAuth.instance.signOut();
+                }
+              },
+              child: Text(buttonText),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+extension EmailValidator on String {
+  bool isValidEmail() {
+    return RegExp(
+            r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+        .hasMatch(this);
   }
 }

@@ -1,4 +1,4 @@
 io/flutter/plugins/GeneratedPluginRegistrant.java
  io.flutter.plugins.GeneratedPluginRegistrant
-com/harol/fir/auth/demo/fir_auth_demo/BuildConfig.java
- com.harol.fir.auth.demo.fir_auth_demo.BuildConfig
+com/harol/fir/auth/demo/BuildConfig.java
+ com.harol.fir.auth.demo.BuildConfig

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "805987610948",
+    "project_id": "firauthdemo-124ef",
+    "storage_bucket": "firauthdemo-124ef.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:805987610948:android:9f63055887f26b3d4e2711",
+        "android_client_info": {
+          "package_name": "com.harol.fir.auth.demo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "805987610948-06hmhons2lvljotpdoo1m7n5n4ss6e1j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD61Kaioq5TLQD8_vgJ3MYSxGKaERutHhs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "805987610948-06hmhons2lvljotpdoo1m7n5n4ss6e1j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

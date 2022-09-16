@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.harol.fir.auth.demo.fir_auth_demo",
+  "applicationId": "com.harol.fir.auth.demo",
   "variantName": "processDebugResources",
   "elements": [
     {
