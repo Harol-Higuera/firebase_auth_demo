@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "artifactType": {
+    "type": "COMPATIBLE_SCREEN_MANIFEST",
+    "kind": "Directory"
+  },
+  "applicationId": "com.harol.fir.auth.demo.fir_auth_demo",
+  "variantName": "debug",
+  "elements": []
+}
