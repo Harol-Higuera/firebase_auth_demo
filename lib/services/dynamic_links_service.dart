@@ -25,10 +25,12 @@ class DynamicLinksService {
         final deepLink = dynamicLinkData.link;
         handleLink(deepLink);
       }).onError((error) {
-        print('Dynamic Links Listener Error: ${error.toString()}');
+        print(
+            '🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥 Dynamic Links Listener Error: ${error.toString()}');
       });
     } catch (e) {
-      print('Dynamic Links Listener initializer Error: ${e.toString()}');
+      print(
+          '🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥 Dynamic Links Listener initializer Error: ${e.toString()}');
     }
   }
 
@@ -52,7 +54,6 @@ class DynamicLinksService {
       final prefs = await SharedPreferences.getInstance();
       final emailAddress = prefs.getString('email_address');
       if (emailAddress != null) {
-        print('Harol...LINK EXISTS!!');
         if (link.toString().contains(DynamicLinkType.emailLink.subDomain)) {
           /// CASE: Email Link
           ///
@@ -61,14 +62,13 @@ class DynamicLinksService {
                   email: emailAddress, emailLink: link.toString())
               .then((_) {})
               .catchError((onError) {
-            print('Harol..Error signing in with email link $onError');
+            print(
+                '🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥 Error signing in with email link $onError');
           });
         } else {
           /// CASE: Anonymous
           ///
         }
-      } else {
-        print('Harol...LINK DOES NOT EXISTS!!');
       }
     }
   }

@@ -39,10 +39,8 @@ class EmailLinkViewModel extends StateNotifier<EmailLinkState> {
     /// Check If User Is logged in
     ///
     final user = auth.currentUser;
-    print('Harol.. User..${user}');
     final email = user?.email;
     final isUserLoggedIn = user != null && email != null;
-    print('Harol.. isUserLoggedIn..${isUserLoggedIn}');
     if (isUserLoggedIn) {
       state = state.copyWith(
           isUserLoggedIn: true,
@@ -122,10 +120,8 @@ class EmailLinkViewModel extends StateNotifier<EmailLinkState> {
   }
 
   void setEntryEmailAddress(String entry) {
-    print('HEEY 1.. ${entry}');
     state = state.copyWith(
       entryEmailAddress: entry,
     );
-    print('HEEY 2.. ${state.entryEmailAddress}');
   }
 }

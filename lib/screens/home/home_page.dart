@@ -13,13 +13,11 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-
   @override
   void initState() {
     super.initState();
     ref.read(dynamicLinksServiceProvider).retrieveInitialLink();
   }
-
 
   @override
   Widget build(BuildContext context) {

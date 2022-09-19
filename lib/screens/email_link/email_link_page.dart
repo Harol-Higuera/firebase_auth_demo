@@ -64,16 +64,12 @@ class _EmailLinkPageState extends ConsumerState<EmailLinkPage> {
             ElevatedButton(
               style: raisedButtonStyle,
               onPressed: () async {
-                print('Harol..1');
                 if (!_isUserLoggedIn) {
                   final entry = state.entryEmailAddress;
-                  print('Harol..2.. ${entry.length}');
                   if (entry.isValidEmail()) {
-                    print('Harol..3');
                     await ref
                         .read(emailViewModelProvider.notifier)
                         .sendEmailToAuthenticate(onDone: () {
-                      print('Harol..4');
                       myController.clear();
                     });
                   }
