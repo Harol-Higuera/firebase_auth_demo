@@ -1,27 +1,31 @@
+import 'package:fir_auth_demo/Constants.dart';
+import 'package:fir_auth_demo/extensions/string+extension.dart';
+import 'package:fir_auth_demo/router/app_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(const MyApp());
+  runApp(
+    ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final _appRouter = AppRouter();
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(),
+    return MaterialApp.router(
+      routerDelegate: _appRouter.delegate(),
+      routeInformationParser: _appRouter.defaultRouteParser(),
     );
   }
 }
@@ -73,7 +77,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         .then(
       (value) async {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('email_address', _entryEmailAddress);
+        await prefs.setString(sharedPrefsPendingEmail, _entryEmailAddress);
         setState(() {
           _emailAddress = _entryEmailAddress;
           _entryEmailAddress = '';
@@ -92,7 +96,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       print('Harol.....resumed');
       checkIfPendingLinks();
-
     }
   }
 
@@ -108,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void handleLink(Uri link) async {
     if (auth.isSignInWithEmailLink(link.toString())) {
       final prefs = await SharedPreferences.getInstance();
-      final emailAddress = prefs.getString('email_address');
+      final emailAddress = prefs.getString(sharedPrefsPendingEmail);
       if (emailAddress != null) {
         print('Harol...LINK EXISTS!!');
         auth
@@ -152,7 +155,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     });
   }
 
-  void _subscribeToDynamicLinks(){
+  void _subscribeToDynamicLinks() {
     dynamicLinks.onLink.listen((dynamicLinkData) {
       final Uri deepLink = dynamicLinkData.link;
       handleLink(deepLink);
@@ -239,13 +242,5 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         ),
       ),
     );
-  }
-}
-
-extension EmailValidator on String {
-  bool isValidEmail() {
-    return RegExp(
-            r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
-        .hasMatch(this);
   }
 }
