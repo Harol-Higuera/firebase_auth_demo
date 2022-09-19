@@ -32,7 +32,7 @@ class _EmailLinkPageState extends ConsumerState<EmailLinkPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Email Link'),
+        title: const Text('Email Link Experiment'),
       ),
       body: SizedBox(
         width: double.maxFinite,
